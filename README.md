@@ -9,10 +9,8 @@
 Open the **Termux** app on your phone, paste this single command, and press **Enter**:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/YOUR_USERNAME/local-ai-termux/main/install.sh | bash
+curl -sL https://raw.githubusercontent.com/prasaddhodamani910-cell/LOCAL-Ai/main/install.sh | bash
 ```
-
-*(Replace `YOUR_USERNAME/local-ai-termux` with your actual GitHub repo URL once uploaded)*
 
 That's it! The script will automatically:
 1. 🔍 Check that your phone has enough free storage space.
