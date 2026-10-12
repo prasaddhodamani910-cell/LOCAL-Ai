@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: Lint, Syntax & Functional Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run shellcheck
+        run: |
+          shellcheck install.sh
+
+      - name: Syntax check
+        run: |
+          bash -n install.sh
+
+      - name: Dry-run check
+        run: |
+          bash install.sh --dry-run
+
+      - name: Test missing dependencies handling
+        run: |
+          # The ubuntu-latest runner does not have llama-cli or Termux pkg installed.
+          # install.sh should gracefully detect missing dependencies, print a descriptive error, and exit with code 1.
+          set +e
+          output=$(bash install.sh 2>&1)
+          exit_code=$?
+          set -e
+          echo "Script output:"
+          echo "$output"
+          echo "Exit code: $exit_code"
+          if [ "$exit_code" -eq 0 ]; then
+            echo "Expected install.sh to fail due to missing dependencies, but it exited with 0"
+            exit 1
+          fi
+          if ! echo "$output" | grep -q "Error: AI engine 'llama-cli' is not installed"; then
+            echo "Missing expected error message regarding llama-cli dependency"
+            exit 1
+          fi
+          echo "Missing dependencies handled gracefully!"
+
+      - name: Test checksum verification logic with corrupted file
+        run: |
+          # Verify that a corrupted model file is correctly detected
+          mkdir -p "$HOME/models"
+          echo "corrupt data" > "$HOME/models/Qwen_Qwen3-1.7B-Q4_K_M.gguf"
+          output=$(bash install.sh --dry-run 2>&1)
+          echo "$output"
+          rm -f "$HOME/models/Qwen_Qwen3-1.7B-Q4_K_M.gguf"
+          if ! echo "$output" | grep -q "corrupt or incomplete"; then
+            echo "Failed to identify corrupted model file"
+            exit 1
+          fi
+          echo "Corrupted file detection verified successfully!"
